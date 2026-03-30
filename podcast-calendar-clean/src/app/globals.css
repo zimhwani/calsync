@@ -110,3 +110,10 @@ body::before {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* Mobile */
+@media (max-width: 768px) {
+  .calendar-day {
+    min-height: 44px !important;
+  }
+}
