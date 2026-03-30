@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval,
-  startOfWeek, endOfWeek, isSameMonth, isSameDay, isPast,
+  startOfWeek, endOfWeek, isSameMonth, isPast,
   addMonths, subMonths, isToday,
 } from 'date-fns'
 import MatchCelebration from './MatchCelebration'
@@ -15,7 +15,7 @@ const HOSTS = [
 ] as const
 
 type HostId = 'mati' | 'jill' | 'tahj'
-type Availability = Record<HostId, string[]> // ISO date strings
+type Availability = Record<HostId, string[]>
 
 function getStoredAvailability(): Availability {
   if (typeof window === 'undefined') return { mati: [], jill: [], tahj: [] }
@@ -33,9 +33,15 @@ export default function CalendarApp() {
   const [availability, setAvailability] = useState<Availability>({ mati: [], jill: [], tahj: [] })
   const [celebratingDate, setCelebratingDate] = useState<string | null>(null)
   const [prevMatchCount, setPrevMatchCount] = useState(0)
+  const [activeTab, setActiveTab] = useState<'calendar' | 'matches'>('calendar')
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     setAvailability(getStoredAvailability())
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
   }, [])
 
   useEffect(() => {
@@ -47,7 +53,6 @@ export default function CalendarApp() {
     return mati.filter(d => jill.includes(d) && tahj.includes(d))
   }, [availability])
 
-  // Detect new matches
   useEffect(() => {
     const matches = getMatchDates()
     if (matches.length > prevMatchCount) {
@@ -91,7 +96,7 @@ export default function CalendarApp() {
   const host = HOSTS.find(h => h.id === activeHost)!
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', position: 'relative' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', position: 'relative', paddingBottom: isMobile ? 24 : 0 }}>
       {celebratingDate && (
         <MatchCelebration date={celebratingDate} onDone={() => setCelebratingDate(null)} />
       )}
@@ -99,7 +104,7 @@ export default function CalendarApp() {
       {/* Header */}
       <header style={{
         borderBottom: '1px solid var(--border)',
-        padding: '20px 24px',
+        padding: isMobile ? '14px 16px' : '20px 24px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -109,86 +114,88 @@ export default function CalendarApp() {
         zIndex: 100,
       }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{
               background: 'var(--match)',
               color: '#000',
               fontFamily: 'Syne, sans-serif',
               fontWeight: 800,
-              fontSize: 11,
-              padding: '3px 8px',
+              fontSize: 10,
+              padding: '2px 7px',
               borderRadius: 4,
               letterSpacing: '0.1em',
             }}>WLGC</div>
-            <span style={{ color: 'var(--muted)', fontSize: 11, letterSpacing: '0.05em' }}>SCHEDULING</span>
+            <span style={{ color: 'var(--muted)', fontSize: 10, letterSpacing: '0.05em' }}>SCHEDULING</span>
           </div>
           <h1 style={{
             fontFamily: 'Syne, sans-serif',
-            fontSize: 22,
+            fontSize: isMobile ? 15 : 22,
             fontWeight: 800,
-            margin: '4px 0 0',
+            margin: '3px 0 0',
             letterSpacing: '-0.02em',
           }}>
             what left the group chat
           </h1>
         </div>
 
-        {/* Match count badge */}
         {matches.length > 0 && (
           <div className="match-glow" style={{
             background: 'var(--match)',
             color: '#000',
-            borderRadius: 12,
-            padding: '8px 16px',
+            borderRadius: 10,
+            padding: isMobile ? '5px 10px' : '8px 16px',
             fontFamily: 'Syne, sans-serif',
             fontWeight: 800,
-            fontSize: 14,
+            fontSize: isMobile ? 11 : 14,
             textAlign: 'center',
           }}>
-            <div style={{ fontSize: 20 }}>🎉</div>
+            <div style={{ fontSize: isMobile ? 14 : 20 }}>🎉</div>
             <div>{matches.length} MATCH{matches.length !== 1 ? 'ES' : ''}</div>
           </div>
         )}
       </header>
 
-      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px', display: 'grid', gap: 32 }}>
+      <main style={{ maxWidth: 1100, margin: '0 auto', padding: isMobile ? '16px 12px' : '32px 24px', display: 'grid', gap: isMobile ? 16 : 32 }}>
 
         {/* Host selector */}
         <section>
-          <p style={{ color: 'var(--muted)', fontSize: 11, letterSpacing: '0.1em', margin: '0 0 16px', textTransform: 'uppercase' }}>
+          <p style={{ color: 'var(--muted)', fontSize: 10, letterSpacing: '0.1em', margin: '0 0 10px', textTransform: 'uppercase' }}>
             Who are you?
           </p>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: isMobile ? 8 : 12 }}>
             {HOSTS.map(h => (
               <button
                 key={h.id}
                 onClick={() => setActiveHost(h.id)}
                 style={{
+                  flex: isMobile ? 1 : 'none',
                   background: activeHost === h.id ? h.colorName : 'var(--surface)',
                   color: activeHost === h.id ? '#000' : 'var(--text)',
                   border: `2px solid ${activeHost === h.id ? h.colorName : 'var(--border)'}`,
                   borderRadius: 12,
-                  padding: '14px 28px',
+                  padding: isMobile ? '10px 4px' : '14px 28px',
                   fontFamily: 'Syne, sans-serif',
                   fontWeight: 800,
-                  fontSize: 18,
+                  fontSize: isMobile ? 14 : 18,
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 10,
+                  justifyContent: 'center',
+                  gap: isMobile ? 5 : 10,
                   letterSpacing: '-0.01em',
+                  whiteSpace: 'nowrap',
                 }}
               >
-                <span style={{ fontSize: 22 }}>{h.emoji}</span>
+                <span style={{ fontSize: isMobile ? 16 : 22 }}>{h.emoji}</span>
                 {h.name}
                 {availability[h.id].length > 0 && (
                   <span style={{
                     background: activeHost === h.id ? 'rgba(0,0,0,0.2)' : h.colorName,
-                    color: activeHost === h.id ? '#000' : '#000',
+                    color: '#000',
                     borderRadius: 20,
-                    padding: '2px 8px',
-                    fontSize: 12,
+                    padding: '1px 6px',
+                    fontSize: 10,
                     fontWeight: 700,
                   }}>
                     {availability[h.id].length}
@@ -199,249 +206,320 @@ export default function CalendarApp() {
           </div>
         </section>
 
-        {/* Calendar + Sidebar */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 24, alignItems: 'start' }}>
-
-          {/* Calendar */}
-          <div style={{ background: 'var(--surface)', borderRadius: 20, padding: 24, border: '1px solid var(--border)' }}>
-            {/* Month nav */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        {/* Mobile tab switcher */}
+        {isMobile && (
+          <div style={{ display: 'flex', background: 'var(--surface)', borderRadius: 12, padding: 4, border: '1px solid var(--border)' }}>
+            {(['calendar', 'matches'] as const).map(tab => (
               <button
-                onClick={() => setCurrentMonth(m => subMonths(m, 1))}
-                style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)', width: 40, height: 40, borderRadius: 8, cursor: 'pointer', fontSize: 18 }}
-              >←</button>
-              <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 22, margin: 0, letterSpacing: '-0.02em' }}>
-                {format(currentMonth, 'MMMM yyyy')}
-              </h2>
-              <button
-                onClick={() => setCurrentMonth(m => addMonths(m, 1))}
-                style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)', width: 40, height: 40, borderRadius: 8, cursor: 'pointer', fontSize: 18 }}
-              >→</button>
-            </div>
-
-            {/* Weekday labels */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 8 }}>
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-                <div key={d} style={{ textAlign: 'center', fontSize: 11, color: 'var(--muted)', padding: '4px 0', letterSpacing: '0.05em', fontWeight: 700 }}>
-                  {d}
-                </div>
-              ))}
-            </div>
-
-            {/* Calendar grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
-              {calendarDays().map((day, i) => {
-                const iso = format(day, 'yyyy-MM-dd')
-                const inMonth = isSameMonth(day, currentMonth)
-                const past = isPast(day) && !isToday(day)
-                const hostStatuses = getDayStatus(day)
-                const isMatch = matches.includes(iso)
-                const activeSelected = availability[activeHost].includes(iso)
-
-                return (
-                  <button
-                    key={i}
-                    onClick={() => toggleDate(day)}
-                    className={`calendar-day ${!inMonth || past ? 'disabled' : ''} ${isMatch ? 'match-day' : ''}`}
-                    disabled={!inMonth || past}
-                    style={{
-                      background: isMatch
-                        ? 'rgba(250, 204, 21, 0.15)'
-                        : activeSelected
-                          ? `${host.colorName}22`
-                          : 'var(--surface2)',
-                      border: isMatch
-                        ? '2px solid var(--match)'
-                        : activeSelected
-                          ? `2px solid ${host.colorName}`
-                          : '1px solid var(--border)',
-                      cursor: !inMonth || past ? 'default' : 'pointer',
-                      padding: 0,
-                      minHeight: 64,
-                      flexDirection: 'column',
-                    }}
-                    title={inMonth && !past ? `${format(day, 'MMM d')} — click to toggle` : ''}
-                  >
-                    {/* Date number */}
-                    <div style={{
-                      padding: '6px 8px',
-                      fontSize: 13,
-                      fontWeight: isToday(day) ? 700 : 400,
-                      color: isMatch ? 'var(--match)' : isToday(day) ? 'var(--text)' : inMonth ? 'var(--text)' : 'var(--muted)',
-                      textAlign: 'left',
-                      fontFamily: 'Space Mono, monospace',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                    }}>
-                      <span>{format(day, 'd')}</span>
-                      {isToday(day) && (
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: host.colorName, display: 'block', marginTop: 3 }} />
-                      )}
-                    </div>
-
-                    {/* Host dots */}
-                    {hostStatuses.length > 0 && inMonth && (
-                      <div style={{ display: 'flex', gap: 3, padding: '0 6px 6px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                        {HOSTS.map(h => (
-                          hostStatuses.includes(h.id) && (
-                            <div
-                              key={h.id}
-                              style={{
-                                width: 8,
-                                height: 8,
-                                borderRadius: '50%',
-                                background: h.colorName,
-                                boxShadow: `0 0 6px ${h.colorName}88`,
-                              }}
-                            />
-                          )
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Match star */}
-                    {isMatch && (
-                      <div style={{ position: 'absolute', top: 4, right: 4, fontSize: 12 }}>⭐</div>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* Legend */}
-            <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--border)', display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-              {HOSTS.map(h => (
-                <div key={h.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: h.colorName }} />
-                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>{h.name}</span>
-                </div>
-              ))}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 14 }}>⭐</span>
-                <span style={{ fontSize: 12, color: 'var(--match)' }}>Everyone's free!</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-            {/* Current host's dates */}
-            <div style={{ background: 'var(--surface)', borderRadius: 16, padding: 20, border: `1px solid ${host.colorName}44` }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16 }}>
-                  {host.emoji} {host.name}'s dates
-                </div>
-                {availability[activeHost].length > 0 && (
-                  <button
-                    onClick={() => clearHost(activeHost)}
-                    style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 11, letterSpacing: '0.05em' }}
-                  >
-                    CLEAR ALL
-                  </button>
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  flex: 1,
+                  background: activeTab === tab ? 'var(--surface2)' : 'transparent',
+                  border: 'none',
+                  color: activeTab === tab ? 'var(--text)' : 'var(--muted)',
+                  borderRadius: 10,
+                  padding: '10px',
+                  fontFamily: 'Syne, sans-serif',
+                  fontWeight: 700,
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                }}
+              >
+                {tab === 'calendar' ? '📅' : '⭐'}
+                {tab}
+                {tab === 'matches' && matches.length > 0 && (
+                  <span style={{ background: 'var(--match)', color: '#000', borderRadius: 10, padding: '1px 6px', fontSize: 10, fontWeight: 800 }}>
+                    {matches.length}
+                  </span>
                 )}
-              </div>
-              {availability[activeHost].length === 0 ? (
-                <p style={{ color: 'var(--muted)', fontSize: 13, margin: 0 }}>
-                  No dates selected yet. Click days on the calendar!
-                </p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 200, overflowY: 'auto' }}>
-                  {[...availability[activeHost]].sort().map(d => (
-                    <div key={d} className="slide-in" style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      background: 'var(--surface2)',
-                      borderRadius: 8,
-                      padding: '8px 12px',
-                      fontSize: 13,
-                    }}>
-                      <span>{format(new Date(d + 'T12:00:00'), 'EEE, MMM d')}</span>
-                      {matches.includes(d) && <span style={{ color: 'var(--match)' }}>⭐</span>}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+              </button>
+            ))}
+          </div>
+        )}
 
-            {/* Matches panel */}
-            <div style={{
-              background: matches.length > 0 ? 'rgba(250, 204, 21, 0.08)' : 'var(--surface)',
-              borderRadius: 16,
-              padding: 20,
-              border: `1px solid ${matches.length > 0 ? 'var(--match)' : 'var(--border)'}`,
-            }}>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, marginBottom: 16, color: matches.length > 0 ? 'var(--match)' : 'var(--text)' }}>
-                🎙️ Recording Matches
+        {/* Calendar view */}
+        {(!isMobile || activeTab === 'calendar') && (
+          <div style={{
+            display: isMobile ? 'block' : 'grid',
+            gridTemplateColumns: '1fr 320px',
+            gap: 24,
+            alignItems: 'start',
+          }}>
+            {/* Calendar */}
+            <div style={{ background: 'var(--surface)', borderRadius: 20, padding: isMobile ? 12 : 24, border: '1px solid var(--border)' }}>
+              {/* Month nav */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? 14 : 24 }}>
+                <button
+                  onClick={() => setCurrentMonth(m => subMonths(m, 1))}
+                  style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)', width: 34, height: 34, borderRadius: 8, cursor: 'pointer', fontSize: 15 }}
+                >←</button>
+                <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: isMobile ? 16 : 22, margin: 0, letterSpacing: '-0.02em' }}>
+                  {format(currentMonth, isMobile ? 'MMM yyyy' : 'MMMM yyyy')}
+                </h2>
+                <button
+                  onClick={() => setCurrentMonth(m => addMonths(m, 1))}
+                  style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)', width: 34, height: 34, borderRadius: 8, cursor: 'pointer', fontSize: 15 }}
+                >→</button>
               </div>
-              {matches.length === 0 ? (
-                <p style={{ color: 'var(--muted)', fontSize: 13, margin: 0, lineHeight: 1.6 }}>
-                  No matches yet! All three hosts need to mark the same day as available.
-                </p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {[...matches].sort().map(d => (
-                    <div key={d} style={{
-                      background: 'rgba(250, 204, 21, 0.15)',
-                      border: '1px solid rgba(250, 204, 21, 0.3)',
-                      borderRadius: 10,
-                      padding: '12px 14px',
-                    }}>
-                      <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: 'var(--match)' }}>
-                        {format(new Date(d + 'T12:00:00'), 'EEEE')}
-                      </div>
-                      <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>
-                        {format(new Date(d + 'T12:00:00'), 'MMMM d, yyyy')}
-                      </div>
-                      <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-                        {HOSTS.map(h => (
-                          <div key={h.id} style={{
-                            background: h.colorName + '22',
-                            border: `1px solid ${h.colorName}`,
-                            borderRadius: 6,
-                            padding: '2px 8px',
-                            fontSize: 11,
-                            color: h.colorName,
-                            fontWeight: 700,
-                            letterSpacing: '0.05em',
-                          }}>
-                            {h.name.toUpperCase()}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            {/* Stats */}
-            <div style={{ background: 'var(--surface)', borderRadius: 16, padding: 20, border: '1px solid var(--border)' }}>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, marginBottom: 12, color: 'var(--muted)', letterSpacing: '0.05em' }}>
-                AVAILABILITY
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {HOSTS.map(h => (
-                  <div key={h.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: h.colorName, flexShrink: 0 }} />
-                    <div style={{ fontSize: 13, flex: 1 }}>{h.name}</div>
-                    <div style={{
-                      fontFamily: 'Space Mono, monospace',
-                      fontSize: 13,
-                      color: availability[h.id].length > 0 ? h.colorName : 'var(--muted)',
-                    }}>
-                      {availability[h.id].length} day{availability[h.id].length !== 1 ? 's' : ''}
-                    </div>
+              {/* Weekday labels */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: isMobile ? 2 : 4, marginBottom: 4 }}>
+                {(isMobile ? ['S','M','T','W','T','F','S'] : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']).map((d, i) => (
+                  <div key={i} style={{ textAlign: 'center', fontSize: 10, color: 'var(--muted)', padding: '3px 0', letterSpacing: '0.05em', fontWeight: 700 }}>
+                    {d}
                   </div>
                 ))}
               </div>
+
+              {/* Calendar grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: isMobile ? 3 : 4 }}>
+                {calendarDays().map((day, i) => {
+                  const iso = format(day, 'yyyy-MM-dd')
+                  const inMonth = isSameMonth(day, currentMonth)
+                  const past = isPast(day) && !isToday(day)
+                  const hostStatuses = getDayStatus(day)
+                  const isMatch = matches.includes(iso)
+                  const activeSelected = availability[activeHost].includes(iso)
+
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => toggleDate(day)}
+                      className={`calendar-day ${!inMonth || past ? 'disabled' : ''} ${isMatch ? 'match-day' : ''}`}
+                      disabled={!inMonth || past}
+                      style={{
+                        background: isMatch
+                          ? 'rgba(250, 204, 21, 0.15)'
+                          : activeSelected
+                            ? `${host.colorName}22`
+                            : 'var(--surface2)',
+                        border: isMatch
+                          ? '2px solid var(--match)'
+                          : activeSelected
+                            ? `2px solid ${host.colorName}`
+                            : '1px solid var(--border)',
+                        cursor: !inMonth || past ? 'default' : 'pointer',
+                        padding: 0,
+                        minHeight: isMobile ? 46 : 64,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        position: 'relative',
+                      }}
+                    >
+                      <div style={{
+                        padding: isMobile ? '4px 4px' : '6px 8px',
+                        fontSize: isMobile ? 11 : 13,
+                        fontWeight: isToday(day) ? 700 : 400,
+                        color: isMatch ? 'var(--match)' : inMonth ? 'var(--text)' : 'var(--muted)',
+                        textAlign: 'left',
+                        fontFamily: 'Space Mono, monospace',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                      }}>
+                        <span>{format(day, 'd')}</span>
+                        {isToday(day) && (
+                          <span style={{ width: 4, height: 4, borderRadius: '50%', background: host.colorName, display: 'block', marginTop: 2 }} />
+                        )}
+                      </div>
+
+                      {hostStatuses.length > 0 && inMonth && (
+                        <div style={{ display: 'flex', gap: 2, padding: isMobile ? '0 3px 3px' : '0 6px 6px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                          {HOSTS.map(h => (
+                            hostStatuses.includes(h.id) && (
+                              <div
+                                key={h.id}
+                                style={{
+                                  width: isMobile ? 5 : 8,
+                                  height: isMobile ? 5 : 8,
+                                  borderRadius: '50%',
+                                  background: h.colorName,
+                                  boxShadow: `0 0 4px ${h.colorName}88`,
+                                }}
+                              />
+                            )
+                          ))}
+                        </div>
+                      )}
+
+                      {isMatch && (
+                        <div style={{ position: 'absolute', top: 1, right: 2, fontSize: isMobile ? 8 : 12 }}>⭐</div>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Legend */}
+              <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border)', display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+                {HOSTS.map(h => (
+                  <div key={h.id} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: h.colorName }} />
+                    <span style={{ fontSize: 11, color: 'var(--muted)' }}>{h.name}</span>
+                  </div>
+                ))}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ fontSize: 10 }}>⭐</span>
+                  <span style={{ fontSize: 11, color: 'var(--match)' }}>All free!</span>
+                </div>
+              </div>
             </div>
 
+            {/* Desktop sidebar */}
+            {!isMobile && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <SidebarContent
+                  host={host}
+                  activeHost={activeHost}
+                  availability={availability}
+                  matches={matches}
+                  clearHost={clearHost}
+                  isMobile={false}
+                />
+              </div>
+            )}
           </div>
-        </div>
+        )}
+
+        {/* Mobile matches tab */}
+        {isMobile && activeTab === 'matches' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <SidebarContent
+              host={host}
+              activeHost={activeHost}
+              availability={availability}
+              matches={matches}
+              clearHost={clearHost}
+              isMobile={true}
+            />
+          </div>
+        )}
       </main>
     </div>
+  )
+}
+
+function SidebarContent({ host, activeHost, availability, matches, clearHost, isMobile }: {
+  host: typeof HOSTS[number]
+  activeHost: HostId
+  availability: Availability
+  matches: string[]
+  clearHost: (id: HostId) => void
+  isMobile: boolean
+}) {
+  return (
+    <>
+      <div style={{ background: 'var(--surface)', borderRadius: 16, padding: 20, border: `1px solid ${host.colorName}44` }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16 }}>
+            {host.emoji} {host.name}'s dates
+          </div>
+          {availability[activeHost].length > 0 && (
+            <button
+              onClick={() => clearHost(activeHost)}
+              style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 11, letterSpacing: '0.05em' }}
+            >
+              CLEAR ALL
+            </button>
+          )}
+        </div>
+        {availability[activeHost].length === 0 ? (
+          <p style={{ color: 'var(--muted)', fontSize: 13, margin: 0 }}>
+            {isMobile ? 'Go to the Calendar tab and tap days!' : 'No dates yet. Click days on the calendar!'}
+          </p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 200, overflowY: 'auto' }}>
+            {[...availability[activeHost]].sort().map(d => (
+              <div key={d} className="slide-in" style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                background: 'var(--surface2)',
+                borderRadius: 8,
+                padding: '8px 12px',
+                fontSize: 13,
+              }}>
+                <span>{format(new Date(d + 'T12:00:00'), 'EEE, MMM d')}</span>
+                {matches.includes(d) && <span style={{ color: 'var(--match)' }}>⭐</span>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={{
+        background: matches.length > 0 ? 'rgba(250, 204, 21, 0.08)' : 'var(--surface)',
+        borderRadius: 16,
+        padding: 20,
+        border: `1px solid ${matches.length > 0 ? 'var(--match)' : 'var(--border)'}`,
+      }}>
+        <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, marginBottom: 16, color: matches.length > 0 ? 'var(--match)' : 'var(--text)' }}>
+          🎙️ Recording Matches
+        </div>
+        {matches.length === 0 ? (
+          <p style={{ color: 'var(--muted)', fontSize: 13, margin: 0, lineHeight: 1.6 }}>
+            No matches yet! All three hosts need to mark the same day.
+          </p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[...matches].sort().map(d => (
+              <div key={d} style={{
+                background: 'rgba(250, 204, 21, 0.15)',
+                border: '1px solid rgba(250, 204, 21, 0.3)',
+                borderRadius: 10,
+                padding: '12px 14px',
+              }}>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: 'var(--match)' }}>
+                  {format(new Date(d + 'T12:00:00'), 'EEEE')}
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>
+                  {format(new Date(d + 'T12:00:00'), 'MMMM d, yyyy')}
+                </div>
+                <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                  {HOSTS.map(h => (
+                    <div key={h.id} style={{
+                      background: h.colorName + '22',
+                      border: `1px solid ${h.colorName}`,
+                      borderRadius: 6,
+                      padding: '2px 8px',
+                      fontSize: 11,
+                      color: h.colorName,
+                      fontWeight: 700,
+                      letterSpacing: '0.05em',
+                    }}>
+                      {h.name.toUpperCase()}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={{ background: 'var(--surface)', borderRadius: 16, padding: 20, border: '1px solid var(--border)' }}>
+        <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, marginBottom: 12, color: 'var(--muted)', letterSpacing: '0.05em' }}>
+          AVAILABILITY
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {HOSTS.map(h => (
+            <div key={h.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: h.colorName, flexShrink: 0 }} />
+              <div style={{ fontSize: 13, flex: 1 }}>{h.name}</div>
+              <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 13, color: availability[h.id].length > 0 ? h.colorName : 'var(--muted)' }}>
+                {availability[h.id].length} day{availability[h.id].length !== 1 ? 's' : ''}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
   )
 }
